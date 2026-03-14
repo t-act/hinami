@@ -1,0 +1,19 @@
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active {
+  opacity: 0.7;
+}
+
+input::placeholder {
+  color: #ccc;
+}
