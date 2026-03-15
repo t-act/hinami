@@ -1,23 +1,22 @@
 import { useState } from "react";
 import { CATEGORY_COLORS, CATEGORY_LABELS } from "../constants";
-import type { Category, CalendarEvent } from "../types";
+import type { Category } from "../types";
 
 interface AddEventModalProps {
   onClose: () => void;
-  onAdd: (event: CalendarEvent) => void;
+  onAdd: (data: { title: string; category: Category; start_time: string | null }) => void;
 }
 
 const categories: Category[] = ["mine", "partner", "together"];
 
 export default function AddEventModal({ onClose, onAdd }: AddEventModalProps) {
   const [title, setTitle] = useState("");
-  const [time, setTime] = useState("");
+  const [startTime, setStartTime] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<Category>("mine");
 
   const handleSubmit = () => {
-    if (title.trim() && time) {
-      onAdd({ title: title.trim(), time, category: selectedCategory });
-    }
+    if (!title.trim()) return;
+    onAdd({ title: title.trim(), category: selectedCategory, start_time: startTime || null });
     onClose();
   };
 
@@ -80,8 +79,8 @@ export default function AddEventModal({ onClose, onAdd }: AddEventModalProps) {
           }}>時間</label>
           <input
             type="time"
-            value={time}
-            onChange={e => setTime(e.target.value)}
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
             style={{
               padding: "12px 0",
               border: "none", borderBottom: "1px solid #e0e0e0",
