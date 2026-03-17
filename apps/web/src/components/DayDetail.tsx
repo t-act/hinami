@@ -9,9 +9,11 @@ interface DayDetailProps {
   date: number;
   events: CalendarEvent[];
   onAddClick: () => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (event: CalendarEvent) => void;
 }
 
-export default function DayDetail({ year, month, date, events, onAddClick }: DayDetailProps) {
+export default function DayDetail({ year, month, date, events, onAddClick, onDelete, onEdit }: DayDetailProps) {
   const dayOfWeek = new Date(year, month, date).getDay();
 
   return (
@@ -59,8 +61,8 @@ export default function DayDetail({ year, month, date, events, onAddClick }: Day
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {events.map((ev, i) => (
-            <EventCard key={i} event={ev} />
+          {events.map((ev) => (
+            <EventCard key={ev.id} event={ev} onDelete={onDelete} onEdit={onEdit} />
           ))}
         </div>
       )}

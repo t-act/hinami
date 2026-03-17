@@ -4,19 +4,26 @@ import type { Category, CalendarEvent } from "../types";
 
 interface AddEventModalProps {
   onClose: () => void;
-  onAdd: (event: CalendarEvent) => void;
+  onAdd?: (data: { title: string; category: Category; start_time: string | null }) => void;
+  onEdit?: (id: string, data: { title: string; category: Category; start_time: string | null }) => void;
+  event?: CalendarEvent;
 }
 
 const categories: Category[] = ["mine", "partner", "together"];
 
-export default function AddEventModal({ onClose, onAdd }: AddEventModalProps) {
-  const [title, setTitle] = useState("");
-  const [time, setTime] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<Category>("mine");
+export default function AddEventModal({ onClose, onAdd, onEdit, event }: AddEventModalProps) {
+  const isEdit = !!event;
+  const [title, setTitle] = useState(event?.title ?? "");
+  const [startTime, setStartTime] = useState(event?.start_time ?? "");
+  const [selectedCategory, setSelectedCategory] = useState<Category>(event?.category ?? "mine");
 
   const handleSubmit = () => {
-    if (title.trim() && time) {
-      onAdd({ title: title.trim(), time, category: selectedCategory });
+    if (!title.trim()) return;
+    const data = { title: title.trim(), category: selectedCategory, start_time: startTime || null };
+    if (isEdit) {
+      onEdit?.(event.id, data);
+    } else {
+      onAdd?.(data);
     }
     onClose();
   };
@@ -48,7 +55,7 @@ export default function AddEventModal({ onClose, onAdd }: AddEventModalProps) {
         <div style={{
           fontSize: 20, fontWeight: 300, letterSpacing: -0.5, marginBottom: 24,
         }}>
-          予定を追加
+          {isEdit ? "予定を編集" : "予定を追加"}
         </div>
 
         <div style={{ marginBottom: 16 }}>
@@ -62,6 +69,7 @@ export default function AddEventModal({ onClose, onAdd }: AddEventModalProps) {
             placeholder="予定の名前"
             value={title}
             onChange={e => setTitle(e.target.value)}
+            autoFocus
             style={{
               width: "100%", padding: "12px 0",
               border: "none", borderBottom: "1px solid #e0e0e0",
@@ -80,8 +88,8 @@ export default function AddEventModal({ onClose, onAdd }: AddEventModalProps) {
           }}>時間</label>
           <input
             type="time"
-            value={time}
-            onChange={e => setTime(e.target.value)}
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
             style={{
               padding: "12px 0",
               border: "none", borderBottom: "1px solid #e0e0e0",
@@ -134,7 +142,7 @@ export default function AddEventModal({ onClose, onAdd }: AddEventModalProps) {
             fontFamily: "inherit",
           }}
         >
-          追加する
+          {isEdit ? "保存する" : "追加する"}
         </button>
       </div>
     </div>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#C2684D"/>
+
+  <!-- Sun rays (8 directions) -->
+  <line x1="256" y1="97"  x2="256" y2="67"  stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <line x1="318" y1="123" x2="339" y2="102" stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <line x1="344" y1="185" x2="374" y2="185" stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <line x1="318" y1="247" x2="339" y2="268" stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <line x1="256" y1="273" x2="256" y2="303" stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <line x1="194" y1="247" x2="173" y2="268" stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <line x1="168" y1="185" x2="138" y2="185" stroke="white" stroke-width="22" stroke-linecap="round"/>
+  <line x1="194" y1="123" x2="173" y2="102" stroke="white" stroke-width="22" stroke-linecap="round"/>
+
+  <!-- Sun circle -->
+  <circle cx="256" cy="185" r="72" fill="white"/>
+
+  <!-- Wave (nami) -->
+  <path d="M 52 390 Q 130 318 208 390 Q 286 462 364 390 Q 422 340 464 356"
+        stroke="white" stroke-width="30" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
