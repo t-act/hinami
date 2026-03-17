@@ -73,9 +73,9 @@
 ## Phase 4: PWA + デプロイ
 
 ### PWA
-- [ ] `manifest.json` 作成（アイコン・テーマカラー）
-- [ ] Service Worker 登録
-- [ ] オフラインキャッシュ戦略（Stale-While-Revalidate）
+- [x] `manifest.json` 作成（アイコン・テーマカラー）
+- [x] Service Worker 登録（vite-plugin-pwa / autoUpdate）
+- [x] オフラインキャッシュ戦略（API: NetworkFirst, 静的: StaleWhileRevalidate）
 
 ### デプロイ
 - [ ] Cloudflareアカウント作成

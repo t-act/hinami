@@ -7,4 +7,4 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DB"
 database_name = "hinami-db"
 # ローカル開発では不要。本番デプロイ前に `wrangler d1 create hinami-db` で取得した ID を設定する
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "557bfb55-dcf7-4ee1-a1d3-8c52eaa23c03"
