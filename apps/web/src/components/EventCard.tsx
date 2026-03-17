@@ -4,9 +4,10 @@ import type { CalendarEvent } from "../types";
 interface EventCardProps {
   event: CalendarEvent;
   onDelete?: (id: string) => void;
+  onEdit?: (event: CalendarEvent) => void;
 }
 
-export default function EventCard({ event, onDelete }: EventCardProps) {
+export default function EventCard({ event, onDelete, onEdit }: EventCardProps) {
   const colors = CATEGORY_COLORS[event.category];
 
   return (
@@ -46,6 +47,26 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
       }}>
         {CATEGORY_LABELS[event.category]}
       </span>
+      {onEdit && (
+        <button
+          onClick={() => onEdit(event)}
+          style={{
+            flexShrink: 0,
+            width: 28, height: 28,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "transparent", border: "none",
+            cursor: "pointer", borderRadius: 6,
+            color: "#7eb8f7",
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = "#3a8fd4")}
+          onMouseLeave={e => (e.currentTarget.style.color = "#7eb8f7")}
+          aria-label="編集"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M9.5 2L12 4.5L5 11.5H2.5V9L9.5 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      )}
       {onDelete && (
         <button
           onClick={() => onDelete(event.id)}
@@ -55,10 +76,10 @@ export default function EventCard({ event, onDelete }: EventCardProps) {
             display: "flex", alignItems: "center", justifyContent: "center",
             background: "transparent", border: "none",
             cursor: "pointer", borderRadius: 6,
-            color: "#ccc",
+            color: "#f0a0a0",
           }}
           onMouseEnter={e => (e.currentTarget.style.color = "#e57373")}
-          onMouseLeave={e => (e.currentTarget.style.color = "#ccc")}
+          onMouseLeave={e => (e.currentTarget.style.color = "#f0a0a0")}
           aria-label="削除"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

@@ -50,4 +50,12 @@ export const api = {
   deleteEvent(id: string) {
     return req<{ id: string }>(`/events/${id}`, { method: "DELETE" });
   },
+
+  updateEvent(id: string, data: {
+    title?: string;
+    category?: Category;
+    start_time?: string | null;
+  }) {
+    return req<ApiEvent>(`/events/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+  },
 };

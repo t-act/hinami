@@ -22,17 +22,26 @@ export default function App() {
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState(today.getDate());
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [events, setEvents] = useState<EventMap>({});
+  const [error, setError] = useState<string | null>(null);
 
   const [coupleId, setCoupleId] = useState<string | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // エラー自動クリア
+  useEffect(() => {
+    if (!error) return;
+    const id = setTimeout(() => setError(null), 3000);
+    return () => clearTimeout(id);
+  }, [error]);
+
   // セッション初期化（マウント時のみ）
   useEffect(() => {
     (async () => {
       try {
-        // ?join=TOKEN が URL に含まれていれば招待参加を試みる
         const params = new URLSearchParams(window.location.search);
         const joinToken = params.get("join");
         if (joinToken) {
@@ -42,15 +51,17 @@ export default function App() {
 
         const me = await api.getMe();
         setCoupleId(me.couple_id);
-        if (me.invite_token) {
+        // partner ロールには招待URLを表示しない
+        if (me.invite_token && me.role !== "partner") {
           setInviteUrl(`${window.location.origin}/?join=${me.invite_token}`);
         }
       } catch (e: unknown) {
-        // 未セッション → 新規カップル作成
         if (e instanceof Error && (e as { status?: number }).status === 401) {
           const couple = await api.createCouple();
           setCoupleId(couple.couple_id);
           setInviteUrl(`${window.location.origin}/?join=${couple.invite_token}`);
+        } else {
+          setError("接続に失敗しました");
         }
       } finally {
         setLoading(false);
@@ -85,30 +96,67 @@ export default function App() {
   const selectedKey = `${currentYear}-${currentMonth + 1}-${selectedDate}`;
   const selectedEvents = events[selectedKey] || [];
 
+  // イベント追加（楽観的更新）
   const handleAddEvent = async (data: { title: string; category: Category; start_time: string | null }) => {
+    const tempId = `temp-${Date.now()}`;
+    const tempEvent: CalendarEvent = { id: tempId, title: data.title, category: data.category, start_time: data.start_time, end_time: null, is_mine: true };
+    setEvents(prev => ({ ...prev, [selectedKey]: [...(prev[selectedKey] || []), tempEvent] }));
+
     try {
       const created = await api.createEvent({ ...data, date: selectedKey });
       setEvents(prev => ({
         ...prev,
-        [selectedKey]: [...(prev[selectedKey] || []), { ...created, date: undefined } as CalendarEvent],
+        [selectedKey]: (prev[selectedKey] || []).map(e => e.id === tempId ? { ...created } as CalendarEvent : e),
       }));
     } catch {
-      // TODO: エラー表示
+      setEvents(prev => ({ ...prev, [selectedKey]: (prev[selectedKey] || []).filter(e => e.id !== tempId) }));
+      setError("予定の追加に失敗しました");
     }
   };
 
-  const handleDeleteEvent = async (id: string) => {
+  // イベント削除要求（確認ダイアログを表示）
+  const handleDeleteEvent = (id: string) => {
+    setConfirmingDeleteId(id);
+  };
+
+  // 削除確認後の実行（楽観的更新）
+  const handleConfirmDelete = async () => {
+    const id = confirmingDeleteId!;
+    setConfirmingDeleteId(null);
+    const snapshot = events;
+    setEvents(prev => {
+      const updated = { ...prev };
+      for (const key of Object.keys(updated)) {
+        updated[key] = updated[key].filter(e => e.id !== id);
+      }
+      return updated;
+    });
+
     try {
       await api.deleteEvent(id);
-      setEvents(prev => {
-        const updated = { ...prev };
-        for (const key of Object.keys(updated)) {
-          updated[key] = updated[key].filter(e => e.id !== id);
-        }
-        return updated;
-      });
     } catch {
-      // TODO: エラー表示
+      setEvents(snapshot);
+      setError("削除に失敗しました");
+    }
+  };
+
+  // イベント更新（楽観的更新）
+  const handleUpdateEvent = async (id: string, data: { title: string; category: Category; start_time: string | null }) => {
+    const snapshot = events;
+    setEvents(prev => {
+      const updated = { ...prev };
+      for (const key of Object.keys(updated)) {
+        updated[key] = updated[key].map(e => e.id === id ? { ...e, ...data } : e);
+      }
+      return updated;
+    });
+    setEditingEvent(null);
+
+    try {
+      await api.updateEvent(id, data);
+    } catch {
+      setEvents(snapshot);
+      setError("予定の更新に失敗しました");
     }
   };
 
@@ -197,14 +245,91 @@ export default function App() {
         events={selectedEvents}
         onAddClick={() => setShowAddModal(true)}
         onDelete={handleDeleteEvent}
+        onEdit={setEditingEvent}
       />
       <BottomNav />
 
+      {/* イベント追加モーダル */}
       {showAddModal && (
         <AddEventModal
           onClose={() => setShowAddModal(false)}
           onAdd={handleAddEvent}
         />
+      )}
+
+      {/* イベント編集モーダル */}
+      {editingEvent && (
+        <AddEventModal
+          onClose={() => setEditingEvent(null)}
+          onEdit={handleUpdateEvent}
+          event={editingEvent}
+        />
+      )}
+
+      {/* 削除確認ダイアログ */}
+      {confirmingDeleteId && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 200,
+          }}
+          onClick={() => setConfirmingDeleteId(null)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "calc(100% - 56px)", maxWidth: 374,
+              background: "#fff", borderRadius: 16, padding: "28px 24px",
+            }}
+          >
+            <div style={{ fontSize: 16, fontWeight: 400, marginBottom: 8, letterSpacing: -0.3 }}>
+              予定を削除しますか？
+            </div>
+            <div style={{ fontSize: 13, color: "#aaa", marginBottom: 28, letterSpacing: 0.3 }}>
+              この操作は取り消せません。
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button
+                onClick={() => setConfirmingDeleteId(null)}
+                style={{
+                  flex: 1, padding: "12px 0",
+                  border: "1px solid #e0e0e0", borderRadius: 10,
+                  background: "#fff", fontSize: 14, cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                style={{
+                  flex: 1, padding: "12px 0",
+                  border: "none", borderRadius: 10,
+                  background: "#e57373", color: "#fff",
+                  fontSize: 14, cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                削除する
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* エラートースト */}
+      {error && (
+        <div style={{
+          position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
+          background: "#333", color: "#fff", padding: "10px 20px",
+          borderRadius: 8, fontSize: 13, letterSpacing: 0.5,
+          zIndex: 300, whiteSpace: "nowrap",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+        }}>
+          {error}
+        </div>
       )}
     </div>
   );
